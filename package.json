@@ -1,0 +1,23 @@
+{
+  "name": "yapi-to-petal-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xiangwenhu/yapi-to-petal-service.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/xiangwenhu/yapi-to-petal-service/issues"
+  },
+  "homepage": "https://github.com/xiangwenhu/yapi-to-petal-service#readme",
+  "dependencies": {
+    "json-schema-to-typescript": "^13.1.1"
+  }
+}
