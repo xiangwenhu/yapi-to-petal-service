@@ -19,5 +19,8 @@
   "homepage": "https://github.com/xiangwenhu/yapi-to-petal-service#readme",
   "dependencies": {
     "json-schema-to-typescript": "^13.1.1"
+  },
+  "devDependencies": {
+    "@types/json-schema": "^7.0.14"
   }
 }
