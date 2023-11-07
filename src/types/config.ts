@@ -1,8 +1,7 @@
-
 export interface IConfig {
     targetFolder: string;
     projects: IConfig.YPIProject[];
-    items: IConfig.TransConfigItem[]
+    items: IConfig.TransConfigItem[];
 }
 
 export namespace IConfig {
@@ -19,10 +18,6 @@ export namespace IConfig {
          */
         id: string;
         /**
-         * 安全token
-         */
-        token: string;
-        /**
          * 地址
          */
         remoteUrl: string;
@@ -30,17 +25,25 @@ export namespace IConfig {
          * 是否启用
          */
         enabled: boolean;
+        /**
+         * 
+         */
+        projectId: number;
+        /**
+         * 
+         */
+        server: string;
     }
-
 
     /**
      * 转换配置
      */
     export interface TransConfigItem {
+        serverId: string;
         /**
          * 白名单
          */
-        whiteList: [string | RegExp][];
+        whiteList?: [string | RegExp][];
         /**
          * 类别 分类或者api
          */
@@ -52,6 +55,7 @@ export namespace IConfig {
         /**
          * 目标目录
          */
-        name: string;
+        fileName: string;
     }
+
 }

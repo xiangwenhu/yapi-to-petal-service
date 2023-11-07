@@ -2,3 +2,4 @@ node_modules
 demo_data
 demodata
 test_config
+.cache
