@@ -103,7 +103,9 @@ export namespace APIItem {
     /**
      * 请求表单项
      */
-    export interface ReqBodyFormItem extends CommonFieldItem { }
+    export interface ReqBodyFormItem extends CommonFieldItem { 
+        type: FormParamType
+    }
 
 
     /**

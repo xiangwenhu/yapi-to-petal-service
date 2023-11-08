@@ -1,4 +1,5 @@
 export interface IConfig {
+    defaultExport: string;
     targetFolder: string;
     projects: IConfig.YPIProject[];
     items: IConfig.TransConfigItem[];
@@ -56,6 +57,10 @@ export namespace IConfig {
          * 目标目录
          */
         fileName: string;
+        /**
+         * 生成class名字
+         */
+        className?: string;
     }
 
 }
