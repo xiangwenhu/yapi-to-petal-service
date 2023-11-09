@@ -6,33 +6,38 @@ import { IConfig } from "../src/types/config";
 import { CateItem } from "../src/types/yapi";
 import { ensureDir } from "../src/util";
 import { genTypeScript } from "../src/code/ts";
+import * as saver from "../src/saver";
 
-const configPath = path.join(__dirname, "../demodata/config/demo.json")
+const configPath = path.join(__dirname, "../demodata/config/demo.json");
 const config: IConfig = require(configPath);
 
-async function downloadProjects(site: IConfig.SiteItem, cacheProjectsPath: string) {
+async function downloadProjects(
+    site: IConfig.SiteItem,
+    cacheProjectsPath: string
+) {
     // 生成新project数据结构，并本地缓存
     const eApiItems: EAPIItem[] = [];
 
     for (let i = 0; i < site.projects.length; i++) {
         const project = site.projects[i];
-        const cates: CateItem[] = await loader.getProjectData(project.remoteUrl!);
-        cates.forEach(cate => {
-            const eItems = cate.list.map(api => {
+        const cates: CateItem[] = await loader.getProjectData(
+            project.remoteUrl!
+        );
+        cates.forEach((cate) => {
+            const eItems = cate.list.map((api) => {
                 const eItem: EAPIItem = {
                     api,
                     project,
                     cate,
-                    site
-                }
-                return eItem
+                    site,
+                };
+                return eItem;
             });
             eApiItems.push(...eItems);
-        })
+        });
     }
     return eApiItems;
 }
-
 
 (async function () {
     console.log("config:", config);
@@ -57,7 +62,7 @@ async function downloadProjects(site: IConfig.SiteItem, cacheProjectsPath: strin
                 project.token = qs.get("token");
                 continue;
             } else if (project.id && project.token) {
-                project.remoteUrl = `${site.server}/api/open/plugin/export-full?type=json&pid=${project.id}&status=all&token=${project.token}`
+                project.remoteUrl = `${site.server}/api/open/plugin/export-full?type=json&pid=${project.id}&status=all&token=${project.token}`;
                 continue;
             }
             throw new Error("project 必须配置 remoteUrl, 或者 id和token");
@@ -67,7 +72,7 @@ async function downloadProjects(site: IConfig.SiteItem, cacheProjectsPath: strin
     const cachePath = path.join(__dirname, "../.cache");
     const cacheProjectsPath = path.join(cachePath, "projects");
 
-    ensureDir(cacheProjectsPath)
+    ensureDir(cacheProjectsPath);
 
     // 全部转为 EAPIItem
     const eApiItems: EAPIItem[] = [];
@@ -78,42 +83,57 @@ async function downloadProjects(site: IConfig.SiteItem, cacheProjectsPath: strin
     }
     console.log("eApiItems:", eApiItems.length);
 
-
     // service 按照fileName 分组
-    const sFileGroups: Record<string, {
-        folder: string;
-        services: IConfig.ServiceItem[]
-    }> = {};
-    sites.forEach(site => {
+    const sFileGroups: Record<
+        string,
+        {
+            folder: string;
+            services: IConfig.ServiceItem[];
+        }
+    > = {};
+    sites.forEach((site) => {
         site.services.forEach((service) => {
-            const serviceFileName = service.fileName || 'service';
-            const fServiceFolder = path.join(configDir, service.serviceFolder || site.serviceFolder || serviceFolder, serviceFileName);
+            const serviceFileName = service.fileName || "service";
+            const fServiceFolder = path.join(
+                configDir,
+                service.serviceFolder || site.serviceFolder || serviceFolder,
+                serviceFileName
+            );
 
-            if (!sFileGroups[fServiceFolder]) sFileGroups[fServiceFolder] = {
-                folder: fServiceFolder,
-                services: []
-            };
+            if (!sFileGroups[fServiceFolder])
+                sFileGroups[fServiceFolder] = {
+                    folder: fServiceFolder,
+                    services: [],
+                };
             sFileGroups[fServiceFolder].services.push(service);
         });
-    })
+    });
 
     // service 按照fileName 分组
-    const tFileGroups: Record<string, {
-        folder: string;
-        services: IConfig.ServiceItem[]
-    }> = {};
-    sites.forEach(site => {
+    const tFileGroups: Record<
+        string,
+        {
+            filePath: string;
+            services: IConfig.ServiceItem[];
+        }
+    > = {};
+    sites.forEach((site) => {
         site.services.forEach((service) => {
-            const serviceFileName = service.fileName || 'service';
-            const fServiceFolder = path.join(configDir, service.serviceFolder || site.serviceFolder || serviceFolder, serviceFileName);
+            const serviceFileName = (service.fileName || "service") + ".types.ts";
+            const fServiceFile = path.join(
+                configDir,
+                service.serviceFolder || site.serviceFolder || serviceFolder,
+                serviceFileName
+            );
 
-            if (!tFileGroups[fServiceFolder]) tFileGroups[fServiceFolder] = {
-                folder: fServiceFolder,
-                services: []
-            };
-            tFileGroups[fServiceFolder].services.push(service);
+            if (!tFileGroups[fServiceFile])
+                tFileGroups[fServiceFile] = {
+                    filePath: fServiceFile,
+                    services: [],
+                };
+            tFileGroups[fServiceFile].services.push(service);
         });
-    })
+    });
 
     // console.log("分组后:", sFileGroups, tFileGroups);
 
@@ -121,27 +141,38 @@ async function downloadProjects(site: IConfig.SiteItem, cacheProjectsPath: strin
     const tGroups = Array.from(Object.values(tFileGroups));
 
     // 按照组，找到api，并且生成文件
-    tGroups.forEach( async g => {
+    tGroups.forEach(async (g) => {
         const eItems: EAPIItem[] = [];
-        g.services.forEach(s => {
+        g.services.forEach((s) => {
             switch (s.type) {
                 case "api":
-                    eItems.push(...eApiItems.filter(api => s.items.includes(api.api._id)));
+                    eItems.push(
+                        ...eApiItems.filter((api) =>
+                            s.items.includes(api.api._id)
+                        )
+                    );
                     break;
                 case "cate":
-                    eItems.push(...eApiItems.filter(api => s.items.includes(api.api.catid)));
+                    eItems.push(
+                        ...eApiItems.filter((api) =>
+                            s.items.includes(api.api.catid)
+                        )
+                    );
                     break;
                 case "project":
-                    eItems.push(...eApiItems.filter(api => s.items.includes(api.project.id!)))
+                    eItems.push(
+                        ...eApiItems.filter((api) =>
+                            s.items.includes(api.project.id!)
+                        )
+                    );
                     break;
                 default:
                     break;
             }
-        })
+        });
         console.log("eItems", eItems.length);
         const tsStr = await genTypeScript(eItems);
         console.log("tsStr:", tsStr);
-    })
-
-
+        saver.save(g.filePath, tsStr);
+    });
 })();
