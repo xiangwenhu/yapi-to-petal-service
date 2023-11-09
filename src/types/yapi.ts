@@ -1,4 +1,3 @@
-
 export interface CateItem {
     /**
      * 索引

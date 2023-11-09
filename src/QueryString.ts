@@ -1,7 +1,7 @@
 export class QueryString {
     #qsObject: Record<string, string> = {};
 
-    constructor(private url: string) {
+    constructor(url: string) {
         const qsStr = url.trim().split("?");
         if (qsStr.length > 1) {
             this.#qsObject = qsStr[1]

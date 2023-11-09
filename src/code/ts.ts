@@ -1,8 +1,9 @@
 import { JSONSchema4 } from "json-schema";
 import { jsonSchemeToTypeScript } from "../schema";
-import { APIItem } from "../types/yapi";
 import { firstToUpper } from "../util";
 import { getTypeByFormType } from "../util/typesTransformer";
+import { EAPIItem } from "../types";
+import { APIItem } from "../types/yapi";
 
 /**
  * 请求参数的类名
@@ -57,7 +58,8 @@ export interface ${typeName} {
  * @param api
  * @returns
  */
-async function generateReqBodyType(api: APIItem) {
+async function generateReqBodyType(eApi: EAPIItem) {
+    const { api } = eApi;
     let code = '';
     const typeName = getReqBodyTypeName(api.title);
     if (!api) {
@@ -162,25 +164,22 @@ export interface ${typeName} {
 }
 
 
-const BUILTIN_TYPES = [`
-export type CommonString = string;
-`,
-    `
-export type CommonKeyValue = Record<string, any>
-`
+const BUILTIN_TYPES = [
+    `export type CommonString = string;`,
+    `export type CommonKeyValue = Record<string, any>`
 ]
 
-export async function genTypeScript(list: APIItem[]) {
+export async function genTypeScript(list: EAPIItem[]) {
     const results: string[] = [];
     for (let i = 0; i < list.length; i++) {
         const item = list[i];
         const reqBodyType = await generateReqBodyType({
             ...item
         })
-        const reqQueryType = generateReqQueryType(item);
+        const reqQueryType = generateReqQueryType(item.api);
 
         const resBodyType = await generateResBodyType({
-            ...item
+            ...item.api
         })
         results.push(reqQueryType)
         results.push(reqBodyType?.code || '');

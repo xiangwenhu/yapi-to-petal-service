@@ -1,11 +1,17 @@
 export interface IConfig {
-    defaultExport: string;
-    targetFolder: string;
-    projects: IConfig.YPIProject[];
-    items: IConfig.TransConfigItem[];
+    /**
+     * services 所在的目录
+     */
+    serviceFolder: string;
+    /**
+     * types所在的目录
+     */
+    typesFolder: string;
+    sites: IConfig.SiteItem[]
 }
 
 export namespace IConfig {
+
     /**
      * yai Project的信息
      */
@@ -13,46 +19,34 @@ export namespace IConfig {
         /**
          * 名称
          */
-        name: string;
+        name?: string;
         /**
-         * id
+         * id + token, remoteUrl 二选一
          */
-        id: string;
-        /**
-         * 地址
-         */
-        remoteUrl: string;
-        /**
-         * 是否启用
-         */
-        enabled: boolean;
-        /**
+        id?: number;
+        /**id + token, remoteUrl 二选一
          * 
          */
-        projectId: number;
+        token?: string;
         /**
-         * 
+         * 地址, id + token, remoteUrl 二选一
          */
-        server: string;
+        remoteUrl?: string;
+        /**
+         * 是否禁用
+         */
+        disabled: boolean;
     }
 
     /**
      * 转换配置
      */
-    export interface TransConfigItem {
-        serverId: string;
-        /**
-         * 白名单
-         */
+    export interface ServiceItem {
         whiteList?: [string | RegExp][];
         /**
          * 类别 分类或者api
          */
         type: "cate" | "api" | "project";
-        /**
-         * id的值
-         */
-        id: number;
         /**
          * 目标目录
          */
@@ -61,6 +55,20 @@ export namespace IConfig {
          * 生成class名字
          */
         className?: string;
+        /**
+         * 根据type不同，值不同
+         */
+        items: number[];
+        serviceFolder?: string;
+        typesFolder?: string;
+    }
+
+    export interface SiteItem {
+        server: string;
+        serviceFolder?: string;
+        typesFolder?: string;
+        projects: IConfig.YPIProject[];
+        services: IConfig.ServiceItem[]
     }
 
 }
