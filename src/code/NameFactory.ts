@@ -1,4 +1,5 @@
-import { serverToCommonStr, strArrayToBeaut } from "../util";
+import _ from "lodash";
+import { firstToUpper, serverToCommonStr, strArrayToBeaut } from "../util";
 import { EAPIItem } from "./../types/index";
 
 interface IsExistHandler {
@@ -6,7 +7,7 @@ interface IsExistHandler {
 }
 
 interface APINameDetail {
-    name: string; 
+    name: string;
     eApi: EAPIItem;
     reqQueryTypeName?: string;
     reqBodyName?: string;
@@ -16,11 +17,15 @@ interface APINameDetail {
     hasResBody?: boolean;
 }
 
-export interface NameHandler {
+interface NameOnlyHandler {
     (params: { eApi: EAPIItem; isExist: IsExistHandler }): string;
 }
 
-const defaultNameHandler: NameHandler = function ({ eApi, isExist }) {
+interface NameHandler {
+    (params: { eApi: EAPIItem; isExist: IsExistHandler }): APINameDetail;
+}
+
+const getBaseName: NameOnlyHandler = ({ eApi, isExist }) => {
     let apiName: string, methodName: string;
     const pathStr = eApi.api.path.trim();
     methodName = !pathStr.includes("/") ? pathStr : pathStr.split("/").pop()!;
@@ -50,6 +55,37 @@ const defaultNameHandler: NameHandler = function ({ eApi, isExist }) {
     throw new Error(`wow!, crate api name failed`);
 };
 
+// TODO::
+function hasReqBody(eApi: EAPIItem){
+
+    return false;
+}
+
+const defaultNameHandler: NameHandler = function ({ eApi, isExist }) {
+    const name = getBaseName({ eApi, isExist });
+    const { api } = eApi;
+
+    const hasReqQuery =
+        Array.isArray(api.req_query) && api.req_query.length > 0;
+    //
+    const hasReqBody = false; // Array.isArray()
+    const hasResBody =
+        _.isString(api.res_body) && api.res_body.trim().length > 0;
+
+    const fBaseName = firstToUpper(name);
+
+    return {
+        name,
+        hasResBody,
+        hasReqQuery,
+        hasReqBody: true,
+        reqBodyName: hasReqBody ? `req${fBaseName}Body` : undefined,
+        reqQueryTypeName: hasReqQuery ? `req${fBaseName}Query` : undefined,
+        resBodyName: hasResBody ? `res${fBaseName}Body` : undefined,
+        eApi
+    };
+};
+
 class NamesFactory {
     #usedNames: Map<string, APINameDetail> = new Map();
 
@@ -61,11 +97,8 @@ class NamesFactory {
         this.#usedNames.clear();
         const { isExist } = this;
         this.apis.forEach((eApi) => {
-            const apiName = nameHandler({ eApi, isExist });
-            this.#usedNames.set(apiName, {
-                name: apiName,
-                eApi,
-            });
+            const detail = nameHandler({ eApi, isExist });
+            this.#usedNames.set(detail.name, detail);
         });
         this.#names = Array.from(this.#usedNames.values());
     }
