@@ -46,7 +46,7 @@ export interface APIItem {
     title: string;
     path: string;
     project_id: number;
-    req_params: any[];
+    req_params: APIItem.ReqParamsItem[];
     res_body_type: APIItem.ResBodyType;
     req_query: APIItem.ReqQueryItem[];
     req_headers: APIItem.ReqHeadersItem[];
@@ -102,7 +102,7 @@ export namespace APIItem {
     /**
      * 请求表单项
      */
-    export interface ReqBodyFormItem extends CommonFieldItem { 
+    export interface ReqBodyFormItem extends CommonFieldItem {
         type: FormParamType
     }
 
@@ -114,6 +114,14 @@ export namespace APIItem {
         _id: string;
         name: string;
         value: string;
+    }
+
+
+    /**
+     * /test1/:id/:name
+     */
+    export interface ReqParamsItem extends BaseFiledItem {
+        desc: string;
     }
 
 

@@ -131,24 +131,54 @@ export interface ${typeName} {
     return code;
 }
 
+function genReqParamsType(typeName: string, eApi: EAPIItem) {
+    const { api } = eApi;
+    const fCodes = api.req_params.map(
+        (item) =>
+            `   /**
+     * ${item.desc || ""}
+     */
+    ${item.name}: string;`
+    );
+
+    const code = `
+/**
+ * ${api.title}请求Params参数
+ * path: ${api.path}
+ */
+export interface ${typeName} {
+    ${fCodes.join("\r\n")}
+    [k: string]: unknown;
+}`.trim();
+
+    return code;
+}
+
 export async function genTypeScript(list: EAPIItem[]) {
     const nameFactory = new NamesFactory(list);
     nameFactory.gen();
     const results: string[] = [];
     for (let i = 0; i < list.length; i++) {
-        const item = list[i];
-        const name = nameFactory.getName(item);
-        const reqBodyTypeName = `Req${firstToUpper(name)}Body`;
-        const reqQueryTypeName = `Req${firstToUpper(name)}Query`;
-        const resBodyTypeName = `Res${firstToUpper(name)}`;
+        const eApi = list[i];
+        const names = nameFactory.getName(eApi);
 
-        const reqBodyType = await generateReqBodyType(reqBodyTypeName, item);
-        const reqQueryType = generateReqQueryType(reqQueryTypeName, item);
+        if (names.hasReqParams) {
+            const reqParamsType = genReqParamsType(names.reqParamsTypeName!, eApi)
+            results.push(reqParamsType)
+        }
+        if (names.hasReqQuery) {
+            const reqQueryType = genReqParamsType(names.reqQueryTypeName!, eApi)
+            results.push(reqQueryType)
+        }
+        if (names.hasReqBody) {
+            const reqBodyType = await generateReqBodyType(names.reqBodyTypeName!, eApi)
+            results.push(reqBodyType?.code || '')
+        }
+        if (names.hasResBody) {
+            const resBodyType = await generateResBodyType(names.resBodyTypeName!, eApi);
+            results.push(resBodyType?.code || "");
+        }
 
-        const resBodyType = await generateResBodyType(resBodyTypeName, item);
-        results.push(reqQueryType);
-        results.push(reqBodyType?.code || "");
-        results.push(resBodyType?.code || "");
     }
     return results.filter(Boolean).join("\r\n");
 }
