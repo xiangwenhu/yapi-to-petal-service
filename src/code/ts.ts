@@ -3,10 +3,12 @@ import { jsonSchemeToTypeScript } from "../schema";
 import { firstToUpper } from "../util";
 import { getTypeByFormType } from "../util/typesTransformer";
 import { EAPIItem } from "../types";
-import { APIItem } from "../types/yapi";
 import NamesFactory from "./NameFactory";
+import { getFullApiDocUrl } from "./util";
 
-function genCodeByForm(typeName: string, api: APIItem) {
+function genCodeByForm(typeName: string, eApi: EAPIItem) {
+    const apiFullUrl = getFullApiDocUrl(eApi);
+    const { api } = eApi;
     const fCodes = (api.req_body_form || []).map(
         (item) =>
             `   /**
@@ -21,6 +23,7 @@ function genCodeByForm(typeName: string, api: APIItem) {
 /**
  * ${api.title}请求参数
  * path: ${api.path}
+ * doc url: ${apiFullUrl}
  */
 export interface ${typeName} {
     ${fCodes.join("\r\n")}
@@ -41,13 +44,15 @@ async function generateReqBodyType(typeName: string, eApi: EAPIItem) {
     if (!api) {
         return null;
     }
+    const apiFullUrl = getFullApiDocUrl(eApi);
+
     // 请求是JSON Schema
     if (api.req_body_is_json_schema) {
         const schema: JSONSchema4 = JSON.parse(api.req_body_other || "{}");
 
         schema.title = typeName;
         if (!schema.description) {
-            schema.description = `${api.title}请求参数\r\npath: ${api.path}`;
+            schema.description = `${api.title}请求参数\r\npath: ${api.path}\r\ndoc url: ${apiFullUrl}`;
         }
         if (!schema.$schema) {
             schema.$schema = "http://json-schema.org/draft-04/schema#";
@@ -63,7 +68,7 @@ async function generateReqBodyType(typeName: string, eApi: EAPIItem) {
         };
     } else if (api.req_body_type == "form") {
         return {
-            code: genCodeByForm(typeName, api),
+            code: genCodeByForm(typeName, eApi),
             typeName,
             apiInfo: api,
         };
@@ -82,12 +87,13 @@ async function generateResBodyType(typeName: string, eApi: EAPIItem) {
     if (!api) {
         return null;
     }
+    const apiFullUrl = getFullApiDocUrl(eApi);
 
     // 响应是JSON Schema
     if (api.res_body_type === "json" && api.res_body_is_json_schema) {
         const schema: JSONSchema4 = JSON.parse(api.res_body || "{}");
         if (!schema.description) {
-            schema.description = `${api.title}响应结果\r\npath: ${api.path}`;
+            schema.description = `${api.title}响应结果\r\npath: ${api.path}\r\ndoc url: ${apiFullUrl}`;
         }
         schema.title = typeName;
         code = await jsonSchemeToTypeScript(schema, typeName, {
@@ -109,6 +115,7 @@ function generateReqQueryType(typeName: string, eApi: EAPIItem) {
     if (!Array.isArray(req_query) || req_query.length === 0) {
         return "";
     }
+    const apiFullUrl = getFullApiDocUrl(eApi);
 
     const fCodes = req_query.map(
         (item) =>
@@ -122,6 +129,33 @@ function generateReqQueryType(typeName: string, eApi: EAPIItem) {
 /**
  * ${api.title}请求Query参数
  * path: ${api.path}
+ * doc url: ${apiFullUrl}
+ */
+export interface ${typeName} {
+    ${fCodes.join("\r\n")}
+    [k: string]: unknown;
+}`.trim();
+
+    return code;
+}
+
+function genReqParamsType(typeName: string, eApi: EAPIItem) {
+    const { api } = eApi;
+    const apiFullUrl = getFullApiDocUrl(eApi);
+
+    const fCodes = api.req_params.map(
+        (item) =>
+            `   /**
+     * ${item.desc || ""}
+     */
+    ${item.name}: string;`
+    );
+
+    const code = `
+/**
+ * ${api.title}请求Params参数
+ * path: ${api.path}
+ * doc url: ${apiFullUrl}
  */
 export interface ${typeName} {
     ${fCodes.join("\r\n")}
@@ -136,19 +170,26 @@ export async function genTypeScript(list: EAPIItem[]) {
     nameFactory.gen();
     const results: string[] = [];
     for (let i = 0; i < list.length; i++) {
-        const item = list[i];
-        const name = nameFactory.getName(item);
-        const reqBodyTypeName = `Req${firstToUpper(name)}Body`;
-        const reqQueryTypeName = `Req${firstToUpper(name)}Query`;
-        const resBodyTypeName = `Res${firstToUpper(name)}`;
+        const eApi = list[i];
+        const names = nameFactory.getName(eApi);
 
-        const reqBodyType = await generateReqBodyType(reqBodyTypeName, item);
-        const reqQueryType = generateReqQueryType(reqQueryTypeName, item);
+        if (names.hasReqParams) {
+            const reqParamsType = genReqParamsType(names.reqParamsTypeName!, eApi)
+            results.push(reqParamsType)
+        }
+        if (names.hasReqQuery) {
+            const reqQueryType = generateReqQueryType(names.reqQueryTypeName!, eApi)
+            results.push(reqQueryType)
+        }
+        if (names.hasReqBody) {
+            const reqBodyType = await generateReqBodyType(names.reqBodyTypeName!, eApi)
+            results.push(reqBodyType?.code || '')
+        }
+        if (names.hasResBody) {
+            const resBodyType = await generateResBodyType(names.resBodyTypeName!, eApi);
+            results.push(resBodyType?.code || "");
+        }
 
-        const resBodyType = await generateResBodyType(resBodyTypeName, item);
-        results.push(reqQueryType);
-        results.push(reqBodyType?.code || "");
-        results.push(resBodyType?.code || "");
     }
     return results.filter(Boolean).join("\r\n");
 }
