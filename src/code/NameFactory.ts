@@ -11,8 +11,8 @@ interface APINameDetail {
     names: APINames
 }
 
-interface APINames {
-    name: string;
+export interface APINames {
+    apiName: string;
     reqQueryTypeName: string | undefined;
     reqBodyTypeName: string | undefined;
     reqParamsTypeName: string | undefined;
@@ -114,7 +114,7 @@ const defaultNameHandler: NameHandler = function ({ eApi, isExist }) {
 
     return {
         names: {
-            name,
+            apiName: name,
             hasReqParams,
             hasReqQuery,
             hasReqBody,
@@ -141,7 +141,7 @@ class NamesFactory {
         const { isExist } = this;
         this.apis.forEach((eApi) => {
             const detail = nameHandler({ eApi, isExist });
-            this.#usedNames.set(detail.names.name, detail);
+            this.#usedNames.set(detail.names.apiName, detail);
         });
         this.#names = Array.from(this.#usedNames.values());
     }

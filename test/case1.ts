@@ -7,6 +7,8 @@ import { CateItem } from "../src/types/yapi";
 import { ensureDir } from "../src/util";
 import { genTypeScript } from "../src/code/ts";
 import * as saver from "../src/saver";
+import { getFullApiDocUrl } from "../src/code/util";
+import NamesFactory from "../src/code/NameFactory";
 
 const configPath = path.join(__dirname, "../demodata/config/demo.json");
 const config: IConfig = require(configPath);
@@ -119,7 +121,8 @@ async function downloadProjects(
     > = {};
     sites.forEach((site) => {
         site.services.forEach((service) => {
-            const serviceFileName = (service.fileName || "service") + ".types.ts";
+            const serviceFileName =
+                (service.fileName || "service") + ".types.ts";
             const fServiceFile = path.join(
                 configDir,
                 service.serviceFolder || site.serviceFolder || serviceFolder,
@@ -171,6 +174,23 @@ async function downloadProjects(
             }
         });
         console.log("eItems", eItems.length);
+
+        const nameFactory = new NamesFactory(eItems);
+        nameFactory.gen();
+
+        eItems.forEach(item=> {
+            const names = nameFactory.getName(item);
+            item.type = {
+                ...names,
+                docUrl: getFullApiDocUrl({
+                    server: item.site.server,
+                    projectId: item.project.id!,
+                    apiId: item.api._id
+                })
+            }
+
+        })
+
         const tsStr = await genTypeScript(eItems);
         console.log("tsStr:", tsStr);
         saver.save(g.filePath, tsStr);
