@@ -9,6 +9,7 @@ import { genTypeScript } from "../src/code/ts";
 import * as saver from "../src/saver";
 import { getFullApiDocUrl } from "../src/code/util";
 import NamesFactory from "../src/code/NameFactory";
+import { genRequest } from "../src/code/api";
 
 const configPath = path.join(__dirname, "../demodata/config/demo.json");
 const config: IConfig = require(configPath);
@@ -194,5 +195,10 @@ async function downloadProjects(
         const tsStr = await genTypeScript(eItems);
         console.log("tsStr:", tsStr);
         saver.save(g.filePath, tsStr);
+
+        const requestStr = await genRequest(eItems);
+        console.log('requestStr:', requestStr);
+        saver.save(g.filePath.replace('test.types', 'service'), requestStr);
+
     });
 })();

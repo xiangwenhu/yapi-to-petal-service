@@ -10,7 +10,7 @@ export async function genTypeScript(list: EAPIItem[]) {
         const eApi = list[i];
         const type = eApi.type!;
 
-        if (type.hasReqParams) {
+        if (type.hasPathParams) {
             const reqParamsType = generateReqParamsType(eApi);
             results.push(reqParamsType);
         }

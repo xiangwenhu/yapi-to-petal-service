@@ -21,7 +21,7 @@ export interface APINames {
     hasReqQuery: boolean;
     hasReqBody: boolean;
     hasResBody: boolean;
-    hasReqParams: boolean;
+    hasPathParams: boolean;
 }
 
 interface NameOnlyHandler {
@@ -115,7 +115,7 @@ const defaultNameHandler: NameHandler = function ({ eApi, isExist }) {
     return {
         names: {
             apiName: name,
-            hasReqParams,
+            hasPathParams: hasReqParams,
             hasReqQuery,
             hasReqBody,
             hasResBody,
