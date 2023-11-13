@@ -1,6 +1,8 @@
 import { JSONSchema4 } from "json-schema";
 import { EAPIItem } from "../../types";
 import { jsonSchemeToTypeScript } from "../../schema";
+import mockjs from "mockjs";
+import { mockToTypeScript } from "../util/mockjs";
 
 /**
  * 生成响应的TS
@@ -31,10 +33,39 @@ export default async function generateResBodyType(eApi: EAPIItem) {
                 typeName,
                 apiInfo: api,
             };
+        } else {
+            // const schema: JSONSchema4 = mockjs.toJSONSchema(JSON.parse(api.res_body)) as JSONSchema4;
+            // if (!schema.description) {
+            //     schema.description = `${api.title}响应结果\r\npath: ${api.path}\r\ndoc url: ${type?.docUrl}`;
+            // }
+            // schema.title = typeName;
+            // code = await jsonSchemeToTypeScript(schema, typeName, {
+            //     bannerComment: "",
+            // });
+            // return {
+            //     schema,
+            //     code,
+            //     typeName,
+            //     apiInfo: api,
+            // };
+
+            const typeStr = mockToTypeScript(JSON.parse(api.res_body));
+            const code = `
+/**
+ * ${api.title}响应结果
+ * path: ${api.path}
+ * url: ${type?.docUrl} 
+ **/
+export interface ${typeName} ${typeStr}
+            `
+            return {
+                code
+            }
         }
     }
     return {
         code: `
     export interface ${typeName} ${api.res_body}
-    `};
+    `,
+    };
 }
