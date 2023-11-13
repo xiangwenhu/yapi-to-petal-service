@@ -10,6 +10,7 @@ import * as saver from "../src/saver";
 import { getFullApiDocUrl } from "../src/code/util";
 import NamesFactory from "../src/code/NameFactory";
 import { genRequest } from "../src/code/api";
+import generateApiHeader from "../src/code/templates/api.header";
 
 const configPath = path.join(__dirname, "../demodata/config/demo.json");
 const config: IConfig = require(configPath);
@@ -197,8 +198,9 @@ async function downloadProjects(
         saver.save(g.filePath, tsStr);
 
         const requestStr = await genRequest(eItems);
+        const requestHeaderStr = generateApiHeader(eItems);
         console.log('requestStr:', requestStr);
-        saver.save(g.filePath.replace('test.types', 'service'), requestStr);
+        saver.save(g.filePath.replace('test.types', 'service'), requestHeaderStr + "\r\n" + requestStr);
 
     });
 })();
