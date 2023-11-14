@@ -19,7 +19,6 @@ export default function generateReqParamsType(eApi: EAPIItem) {
  */
 export interface ${type?.reqParamsTypeName} {
     ${fCodes.join("\r\n")}
-    [k: string]: unknown;
 }`.trim();
 
     return code;

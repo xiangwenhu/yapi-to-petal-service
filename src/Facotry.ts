@@ -10,7 +10,6 @@ import generateApiHeader from "./code/templates/api.header";
 import { genRequest } from "./code/api";
 
 export default class Factory {
-
     private configManager: ConfigPuppet;
     private eApiItems: EAPIItem[];
 
@@ -35,8 +34,6 @@ export default class Factory {
         this.eApiItems = eApiItems;
     }
 
-
-
     async build() {
         await this.downloadProjects();
         const { types, services } = this.configManager.groupServices();
@@ -45,7 +42,7 @@ export default class Factory {
     }
 
     private buildTypes(typesGroup: ServiceGroup[]) {
-        const { configManager, eApiItems } = this
+        const { configManager, eApiItems } = this;
         // 按照组，找到api，并且生成文件
         typesGroup.forEach(async (g) => {
             const eItems: EAPIItem[] = [];
@@ -58,17 +55,17 @@ export default class Factory {
             const nameFactory = new NamesFactory(eItems);
             nameFactory.gen();
 
-            eItems.forEach(item => {
+            eItems.forEach((item) => {
                 const names = nameFactory.getName(item);
                 item.type = {
                     ...names,
                     docUrl: getFullApiDocUrl({
                         server: item.site.server,
                         projectId: item.project.id!,
-                        apiId: item.api._id
-                    })
-                }
-            })
+                        apiId: item.api._id,
+                    }),
+                };
+            });
 
             const tsStr = await genTypeScript(eItems);
             console.log("tsStr:", tsStr);
@@ -77,26 +74,44 @@ export default class Factory {
     }
 
     private async buildServices(servicesGroup: ServiceGroup[]) {
-        const { configManager, eApiItems } = this
+        const { configManager, eApiItems } = this;
         // 生成文件
         for (let i = 0; i < servicesGroup.length; i++) {
             const g = servicesGroup[i];
             let servicesContent: string[] = [];
             let headersContent: string[] = [];
-            headersContent.push(`import axios from "axios"`)
+            headersContent.push(`import axios from "axios"`);
+            headersContent.push(`import { compile } from "path-to-regexp";`);
             for (let sIndex = 0; sIndex < g.services.length; sIndex++) {
                 const service = g.services[sIndex];
-                const sEItems = configManager.getServiceAPIItems(eApiItems, service);
-                const requestHeaderStr = generateApiHeader(sEItems, service.relativePath!);
+                const sEItems = configManager.getServiceAPIItems(
+                    eApiItems,
+                    service
+                );
+                const requestHeaderStr = generateApiHeader(
+                    sEItems,
+                    service.relativePath!
+                );
                 const requestStr = await genRequest(sEItems);
 
                 headersContent.push(requestHeaderStr);
                 servicesContent.push(requestStr);
             }
-            const content = headersContent.join("\r\n") + "\r\n\r\n" + servicesContent.join("\r\n");
+            headersContent.push("\r\n\r\n");
+            headersContent.push(
+                `
+function pathToUrl(path: string, pathParams: Record<string, string>) {
+    const toPath = compile(path, { encode: encodeURIComponent });
+    const rPath = toPath(pathParams);
+    return rPath;
+}`.trim()
+            );
+            const content =
+                headersContent.join("\r\n") +
+                "\r\n\r\n" +
+                servicesContent.join("\r\n");
 
             saver.save(g.filePath, content);
         }
     }
-
 }

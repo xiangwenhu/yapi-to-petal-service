@@ -3,9 +3,9 @@ import { APINames } from "../NameFactory";
 
 function getParamsTypes(type: APINames) {
     const arr = [];
-    // if (type.hasPathParams) {
-    //     arr.push(`pathParams:${type.reqParamsTypeName}`);
-    // }
+    if (type.hasPathParams) {
+        arr.push(`pathParams:${type.reqParamsTypeName}`);
+    }
     if (type.hasReqQuery) {
         arr.push(`query: ${type.reqQueryTypeName}`);
     }
@@ -17,6 +17,10 @@ function getParamsTypes(type: APINames) {
 
 function getAxiosExtraParams(type: APINames) {
     const arr = [];
+    // if (type.hasPathParams) {
+    //     arr.push(`\t\tparams:query`);
+    // }
+
     if (type.hasReqQuery) {
         arr.push(`\t\tparams:query`);
     }
@@ -33,7 +37,10 @@ export default function generateAPI(eApi: EAPIItem) {
     // const  resType = type?.hasResBody ? `Promise<${type.resBodyTypeName}>`: `Promise<void>`;
     const resType = type?.hasResBody ? `${type.resBodyTypeName}` : `void`;
     const axiosParams = getAxiosExtraParams(type!);
-    const code = `
+    let code: string = "";
+    if (!type!.hasPathParams) {
+        code =
+            `
 /**
  * ${api.title}
  **/
@@ -41,8 +48,25 @@ export function ${type?.apiName}(${funParamsTypes}) {
     return axios<${resType}>({
         url: "${url}",
         method: "${method}",
-${axiosParams}`.trim() + `
+${axiosParams}`.trim() +
+            `
     })
 }`;
+    } else {
+        code =
+            `
+/**
+ * ${api.title}
+ **/
+export function ${type?.apiName}(${funParamsTypes}) {
+    const url = pathToUrl("${url}",pathParams);
+    return axios<${resType}>({
+        url,
+        method: "${method}",
+${axiosParams}`.trim() +
+            `
+    })
+}`;        
+    }
     return code;
 }

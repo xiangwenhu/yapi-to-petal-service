@@ -3,6 +3,9 @@ import { APINames } from "../NameFactory";
 
 function getParamsTypes(type: APINames) {
     const arr = [];
+    if(type.hasPathParams){
+        arr.push(type.reqParamsTypeName);
+    }
     if (type.hasReqQuery) {
         arr.push(type.reqQueryTypeName);
     }
