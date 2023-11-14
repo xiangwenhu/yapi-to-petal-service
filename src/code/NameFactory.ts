@@ -123,7 +123,6 @@ const defaultNameHandler: NameHandler = function ({ eApi, isExist }) {
             reqBodyTypeName: hasReqBody ? `Req${fBaseName}Body` : undefined,
             reqQueryTypeName: hasReqQuery ? `Req${fBaseName}Query` : undefined,
             resBodyTypeName: hasResBody ? `Res${fBaseName}Body` : undefined,
-
         },
         eApi
     };

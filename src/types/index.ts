@@ -14,3 +14,9 @@ export type EAPIItem = {
     },
 }
 
+
+
+export interface ServiceGroup {
+    filePath: string;
+    services: IConfig.ServiceItem[];
+}

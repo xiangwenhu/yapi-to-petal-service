@@ -7,21 +7,21 @@ function getParamsTypes(type: APINames) {
     //     arr.push(`pathParams:${type.reqParamsTypeName}`);
     // }
     if (type.hasReqQuery) {
-        arr.push(`query:${type.reqQueryTypeName}`);
+        arr.push(`query: ${type.reqQueryTypeName}`);
     }
     if (type.hasReqBody) {
-        arr.push(`data:${type.reqBodyTypeName}`);
+        arr.push(`data: ${type.reqBodyTypeName}`);
     }
-    return arr.join(",\r\n");
+    return arr.join(", ");
 }
 
 function getAxiosExtraParams(type: APINames) {
     const arr = [];
     if (type.hasReqQuery) {
-        arr.push(`params:query`);
+        arr.push(`\t\tparams:query`);
     }
     if (type.hasReqBody) {
-        arr.push(`data`);
+        arr.push(`\t\tdata`);
     }
     return arr.join(",\r\n");
 }
@@ -41,8 +41,8 @@ export function ${type?.apiName}(${funParamsTypes}) {
     return axios<${resType}>({
         url: "${url}",
         method: "${method}",
-        ${axiosParams}
+${axiosParams}`.trim() + `
     })
-}`.trim();
+}`;
     return code;
 }

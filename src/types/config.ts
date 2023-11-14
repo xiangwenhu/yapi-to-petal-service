@@ -1,3 +1,5 @@
+import { APIItem } from "./yapi";
+
 export interface IConfig {
     /**
      * services 所在的目录
@@ -72,7 +74,8 @@ export namespace IConfig {
         serviceFolder?: string;
         typesFolder?: string;
         projects: IConfig.YPIProject[];
-        services: IConfig.ServiceItem[]
+        services: IConfig.ServiceItem[];
+        apis: APIItem[]
     }
 
 }
