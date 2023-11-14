@@ -1,7 +1,6 @@
 import { JSONSchema4 } from "json-schema";
 import { EAPIItem } from "../../types";
 import { jsonSchemeToTypeScript } from "../../schema";
-import mockjs from "mockjs";
 import { mockToTypeScript } from "../util/mockjs";
 
 /**
@@ -49,15 +48,15 @@ export default async function generateResBodyType(eApi: EAPIItem) {
             //     apiInfo: api,
             // };
 
-            const typeStr = mockToTypeScript(JSON.parse(api.res_body));
+            const typeStr = await mockToTypeScript(JSON.parse(api.res_body));
             const code = `
 /**
  * ${api.title}响应结果
  * path: ${api.path}
- * url: ${type?.docUrl} 
+ * url: ${type?.docUrl}
  **/
 export interface ${typeName} ${typeStr}
-            `
+            `.trim()
             return {
                 code
             }
@@ -66,6 +65,6 @@ export interface ${typeName} ${typeStr}
     return {
         code: `
     export interface ${typeName} ${api.res_body}
-    `,
+    `.trim(),
     };
 }

@@ -9,6 +9,8 @@ export type EAPIItem = {
     site: IConfig.SiteItem;
     type?: APINames & {
         docUrl: string;
+        serviceFileName?: string;
+        typesFileName?: string;
     },
 }
 

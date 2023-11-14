@@ -62,7 +62,7 @@ export default async function generateReqBodyType(eApi: EAPIItem) {
                 apiInfo: api,
             };
         }else {
-            
+
             const code = `
 /**
  * ${api.title}请求Body
@@ -70,7 +70,7 @@ export default async function generateReqBodyType(eApi: EAPIItem) {
  * url: ${type?.docUrl} 
  **/
 export interface ${typeName} ${api.req_body_other}
-            `
+            `.trim();
             return {
                 code
             }

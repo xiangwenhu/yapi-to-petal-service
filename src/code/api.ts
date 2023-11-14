@@ -8,5 +8,5 @@ export async function genRequest(list: EAPIItem[]) {
         const code = generateRequest(eApi);
         results.push(code);
     }
-    return results.filter(Boolean).join("\r\n");
+    return results.filter(Boolean).join("\r\n\r\n");
 }

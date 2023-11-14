@@ -34,13 +34,15 @@ export default function generateAPI(eApi: EAPIItem) {
     const resType = type?.hasResBody ? `${type.resBodyTypeName}` : `void`;
     const axiosParams = getAxiosExtraParams(type!);
     const code = `
+/**
+ * ${api.title}
+ **/
 export function ${type?.apiName}(${funParamsTypes}) {
     return axios<${resType}>({
         url: "${url}",
         method: "${method}",
         ${axiosParams}
     })
-}  
-`;
+}`.trim();
     return code;
 }

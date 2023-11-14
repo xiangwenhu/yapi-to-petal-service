@@ -43,6 +43,43 @@ async function downloadProjects(
     return eApiItems;
 }
 
+
+interface ServiceGroup {
+    filePath: string;
+    services: IConfig.ServiceItem[];
+}
+
+function getServiceAPIItems(allEApiItems: EAPIItem[], service: IConfig.ServiceItem) {
+    const eItems: EAPIItem[] = [];
+    switch (service.type) {
+        case "api":
+            eItems.push(
+                ...allEApiItems.filter((api) =>
+                    service.items.includes(api.api._id)
+                )
+            );
+            break;
+        case "cate":
+            eItems.push(
+                ...allEApiItems.filter((api) =>
+                    service.items.includes(api.api.catid)
+                )
+            );
+            break;
+        case "project":
+            eItems.push(
+                ...allEApiItems.filter((api) =>
+                    service.items.includes(api.project.id!)
+                )
+            );
+            break;
+        default:
+            break;
+    }
+    return eItems;
+}
+
+
 (async function () {
     console.log("config:", config);
 
@@ -57,6 +94,7 @@ async function downloadProjects(
     console.log("absTypeFolder", absTypeFolder);
 
     // 解析remoteUrl，设置 projectId 和 server
+    // 计算每个service file 和 types file的相对路径
     sites.forEach((site) => {
         for (let i = 0; i < site.projects.length; i++) {
             const project = site.projects[i];
@@ -71,6 +109,18 @@ async function downloadProjects(
             }
             throw new Error("project 必须配置 remoteUrl, 或者 id和token");
         }
+
+        site.services.forEach(service => {
+            const typesFileName = (service.fileName || "service") + ".types.ts"
+            const sFolder = service.serviceFolder || site.serviceFolder || serviceFolder;
+            const tFolder = service.typesFolder || site.serviceFolder || typesFolder;
+            const rPath = path.relative(sFolder, tFolder);
+            service.relativePath = path.join(
+                rPath,
+                typesFileName
+            )
+
+        })
     });
 
     const cachePath = path.join(__dirname, "../.cache");
@@ -87,56 +137,49 @@ async function downloadProjects(
     }
     console.log("eApiItems:", eApiItems.length);
 
-    // service 按照fileName 分组
+    // types 按照fileName 分组
     const sFileGroups: Record<
         string,
-        {
-            folder: string;
-            services: IConfig.ServiceItem[];
-        }
+        ServiceGroup
     > = {};
     sites.forEach((site) => {
         site.services.forEach((service) => {
-            const serviceFileName = service.fileName || "service";
-            const fServiceFolder = path.join(
+            const name = (service.fileName || "service") + ".ts";
+            const serviceFilPath = path.join(
                 configDir,
                 service.serviceFolder || site.serviceFolder || serviceFolder,
-                serviceFileName
+                name
             );
 
-            if (!sFileGroups[fServiceFolder])
-                sFileGroups[fServiceFolder] = {
-                    folder: fServiceFolder,
+            if (!sFileGroups[serviceFilPath])
+                sFileGroups[serviceFilPath] = {
+                    filePath: serviceFilPath,
                     services: [],
                 };
-            sFileGroups[fServiceFolder].services.push(service);
+            sFileGroups[serviceFilPath].services.push(service);
         });
     });
 
-    // service 按照fileName 分组
+    // types 按照fileName 分组
     const tFileGroups: Record<
         string,
-        {
-            filePath: string;
-            services: IConfig.ServiceItem[];
-        }
+        ServiceGroup
     > = {};
     sites.forEach((site) => {
         site.services.forEach((service) => {
-            const serviceFileName =
-                (service.fileName || "service") + ".types.ts";
-            const fServiceFile = path.join(
+            const typesFileName = (service.fileName || "service") + ".types.ts"
+            const fTypesFile = path.join(
                 configDir,
-                service.serviceFolder || site.serviceFolder || serviceFolder,
-                serviceFileName
+                service.typesFolder || site.typesFolder || typesFolder,
+                typesFileName
             );
 
-            if (!tFileGroups[fServiceFile])
-                tFileGroups[fServiceFile] = {
-                    filePath: fServiceFile,
+            if (!tFileGroups[fTypesFile])
+                tFileGroups[fTypesFile] = {
+                    filePath: fTypesFile,
                     services: [],
                 };
-            tFileGroups[fServiceFile].services.push(service);
+            tFileGroups[fTypesFile].services.push(service);
         });
     });
 
@@ -149,38 +192,15 @@ async function downloadProjects(
     tGroups.forEach(async (g) => {
         const eItems: EAPIItem[] = [];
         g.services.forEach((s) => {
-            switch (s.type) {
-                case "api":
-                    eItems.push(
-                        ...eApiItems.filter((api) =>
-                            s.items.includes(api.api._id)
-                        )
-                    );
-                    break;
-                case "cate":
-                    eItems.push(
-                        ...eApiItems.filter((api) =>
-                            s.items.includes(api.api.catid)
-                        )
-                    );
-                    break;
-                case "project":
-                    eItems.push(
-                        ...eApiItems.filter((api) =>
-                            s.items.includes(api.project.id!)
-                        )
-                    );
-                    break;
-                default:
-                    break;
-            }
+            const sEItems = getServiceAPIItems(eApiItems, s);
+            eItems.push(...sEItems);
         });
         console.log("eItems", eItems.length);
 
         const nameFactory = new NamesFactory(eItems);
         nameFactory.gen();
 
-        eItems.forEach(item=> {
+        eItems.forEach(item => {
             const names = nameFactory.getName(item);
             item.type = {
                 ...names,
@@ -190,17 +210,34 @@ async function downloadProjects(
                     apiId: item.api._id
                 })
             }
-
         })
 
         const tsStr = await genTypeScript(eItems);
         console.log("tsStr:", tsStr);
         saver.save(g.filePath, tsStr);
-
-        const requestStr = await genRequest(eItems);
-        const requestHeaderStr = generateApiHeader(eItems);
-        console.log('requestStr:', requestStr);
-        saver.save(g.filePath.replace('test.types', 'service'), requestHeaderStr + "\r\n" + requestStr);
-
     });
+
+
+    // 生成文件
+    for (let i = 0; i < sGroups.length; i++) {
+        const g = sGroups[i];
+        let servicesContent: string[] = [];
+        let headersContent: string[] = [];
+        headersContent.push(`import axios from "axios"`)
+        for (let sIndex = 0; sIndex < g.services.length; sIndex++) {
+            const service = g.services[sIndex];
+            const sEItems = getServiceAPIItems(eApiItems, service);
+            const requestHeaderStr = generateApiHeader(sEItems, service.relativePath!);
+            const requestStr = await genRequest(sEItems);
+
+            headersContent.push(requestHeaderStr);
+            servicesContent.push(requestStr);
+        }
+        const content = headersContent.join("\r\n") + "\r\n\r\n" + servicesContent.join("\r\n");
+
+        saver.save(g.filePath, content);
+    }
+
+
+
 })();

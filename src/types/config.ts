@@ -61,6 +61,10 @@ export namespace IConfig {
         items: number[];
         serviceFolder?: string;
         typesFolder?: string;
+        /**
+         * service File 相对于 types File的路径
+         */
+        relativePath?: string;
     }
 
     export interface SiteItem {
