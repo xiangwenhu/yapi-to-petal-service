@@ -7,3 +7,4 @@
 - [ ] mockjs转为json的错误处理
 - [ ] ci?
 - [ ] 扩展到 petal-service
+- [ ] 请求 ContentType的值
