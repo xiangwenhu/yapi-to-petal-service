@@ -97,10 +97,10 @@ export default class Factory {
                 headersContent.push(requestHeaderStr);
                 servicesContent.push(requestStr);
             }
-            headersContent.push("\r\n\r\n");
+            headersContent.push("\r\n");
             headersContent.push(
                 `
-function pathToUrl(path: string, pathParams: Record<string, string>) {
+function pathToUrl(path: string, pathParams: Object | undefined) {
     const toPath = compile(path, { encode: encodeURIComponent });
     const rPath = toPath(pathParams);
     return rPath;
