@@ -14,9 +14,17 @@ export type EAPIItem = {
     },
 }
 
-
-
 export interface ServiceGroup {
     filePath: string;
     services: IConfig.ServiceItem[];
 }
+
+// 自定义request部分
+export type RequestFunctionParams = APINames;
+
+export interface RequestFunction<R = any> {
+    (paramsObject: RequestFunctionParams): Promise<R>;
+}
+
+
+// 自定义NameFactory部分
