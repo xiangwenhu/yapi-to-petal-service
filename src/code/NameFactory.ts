@@ -28,7 +28,7 @@ interface NameOnlyHandler {
     (params: { eApi: EAPIItem; isExist: IsExistHandler }): string;
 }
 
-interface NameHandler {
+export interface NameHandler {
     (params: { eApi: EAPIItem; isExist: IsExistHandler }): APINameDetail;
 }
 

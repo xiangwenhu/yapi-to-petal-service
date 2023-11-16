@@ -1,5 +1,6 @@
 import { EAPIItem } from "../../types";
 import { APINames } from "../NameFactory";
+import { fixTypesFilePath } from "../util";
 
 function getParamsTypes(type: APINames) {
     const arr = [];
@@ -18,17 +19,6 @@ function getParamsTypes(type: APINames) {
     return arr.join(", ");
 }
 
-function fixTypesFilePath(relativePath: string) {
-    let fp = relativePath;
-    if (fp.endsWith(".ts")) {
-        fp = fp.slice(0, -3);
-    }
-    fp = fp.replace(/\\/img, "/");
-    if (!fp.startsWith(".") || !fp.startsWith("/")) {
-        return `./${fp}`
-    }
-    return fp;
-}
 
 export default function generateApiHeader(eApiList: EAPIItem[], relativePath: string) {
     const fPath = fixTypesFilePath(relativePath);

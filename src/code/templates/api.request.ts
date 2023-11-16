@@ -1,7 +1,6 @@
 import { EAPIItem } from "../../types";
 import { APINames } from "../NameFactory";
 
-
 function getParamsTypes(type: APINames) {
     const arr = [];
     if (type.hasPathParams) {

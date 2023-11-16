@@ -4,10 +4,11 @@ import { EAPIItem, ServiceGroup } from "./types";
 import * as loader from "./loader";
 import * as saver from "./saver";
 import NamesFactory from "./code/NameFactory";
-import { getFullApiDocUrl } from "./code/util";
+import { fixTypesFilePath, getFullApiDocUrl } from "./code/util";
 import { genTypeScript } from "./code/ts";
 import generateApiHeader from "./code/templates/api.header";
 import { genRequest } from "./code/api";
+import { FactoryOptions } from "./types/factory";
 
 export default class Factory {
     private configManager: ConfigPuppet;
@@ -15,7 +16,7 @@ export default class Factory {
 
     private configDir: string;
 
-    constructor(configPath: string) {
+    constructor(configPath: string, private options: FactoryOptions = {}) {
         this.configDir = path.dirname(configPath);
         this.configManager = new ConfigPuppet(configPath);
         this.eApiItems = [];
@@ -78,10 +79,24 @@ export default class Factory {
         // 生成文件
         for (let i = 0; i < servicesGroup.length; i++) {
             const g = servicesGroup[i];
+
+            const fileNameDir = path.dirname(g.filePath);
+            const handlerParams = {
+                filePath: g.filePath,
+                getImportPath(sourcePath: string) {
+                    const dir = path.dirname(sourcePath);
+                    const fileName = path.basename(sourcePath);
+                    const relativeDir = path.relative(fileNameDir, dir);
+                    const relativePath = path.join(relativeDir, fileName);
+                    return fixTypesFilePath(relativePath);
+                },
+            };
             let servicesContent: string[] = [];
-            let headersContent: string[] = [];
-            headersContent.push(`import axios from "axios"`);
-            headersContent.push(`import { compile } from "path-to-regexp";`);
+            let headersContent: string[] | string =
+                this.options.api!.beforeImports!(handlerParams);
+            headersContent = Array.isArray(headersContent)
+                ? headersContent
+                : [headersContent];
             for (let sIndex = 0; sIndex < g.services.length; sIndex++) {
                 const service = g.services[sIndex];
                 const sEItems = configManager.getServiceAPIItems(

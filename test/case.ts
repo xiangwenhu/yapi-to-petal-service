@@ -1,11 +1,29 @@
 import path from "path";
 import Factory from "../src/Facotry";
+import { FactoryOptions } from "../src/types/factory";
 
 const configPath = path.join(__dirname, "../demodata/config/demo.json");
 
 (async function () {
+    
 
-    const factory = new Factory(configPath);
+    const options:FactoryOptions = {
+        api: {
+            beforeImports(params) {                
+                let importsContent: string[] = [];
+                importsContent.push(`import axios from "axios"`);
+                importsContent.push(`import { compile } from "path-to-regexp";`);
+
+                const iPath = params.getImportPath( path.join(__dirname, "./case_ori.ts"))
+                console.log("iPath", iPath);
+
+                importsContent.push(`import * as xxx from "${iPath}"`)
+                return importsContent;
+            },
+        }
+    };
+
+    const factory = new Factory(configPath, options);
     await factory.build();
 
 
