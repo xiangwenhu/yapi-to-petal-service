@@ -113,14 +113,15 @@ export default class Factory {
                 servicesContent.push(requestStr);
             }
             headersContent.push("\r\n");
-            headersContent.push(
-                `
-function pathToUrl(path: string, pathParams: Object | undefined) {
-    const toPath = compile(path, { encode: encodeURIComponent });
-    const rPath = toPath(pathParams);
-    return rPath;
-}`.trim()
-            );
+
+            let afterImportContent: string[] | string =
+                this.options.api!.afterImport!(handlerParams);
+                afterImportContent = Array.isArray(afterImportContent)
+                ? afterImportContent
+                : [afterImportContent];
+
+            headersContent.push(...afterImportContent);
+
             const content =
                 headersContent.join("\r\n") +
                 "\r\n\r\n" +
