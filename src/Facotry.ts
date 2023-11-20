@@ -28,7 +28,8 @@ export default class Factory {
         for (let i = 0; i < sites.length; i++) {
             const site = sites[i];
             // TODO:: cache
-            const eItems = await loader.downloadProjects(site, "");
+            const cachePath = path.join(process.cwd(), ".ys-cache")
+            const eItems = await loader.downloadProjects(site, cachePath);
             eApiItems.push(...eItems);
         }
         this.eApiItems = eApiItems;
@@ -101,7 +102,7 @@ export default class Factory {
             headersContent.push(
                 `
 function pathToUrl(path: string, pathParams: Object | undefined) {
-    path = path.replace(/\\/\{/img, "/:").replace(/\}/, "");
+    path = path.replace(/\\/\\{/img, "/:").replace(/\\}/img, "");
     const toPath = compile(path, { encode: encodeURIComponent });
     const rPath = toPath(pathParams);
     return rPath;

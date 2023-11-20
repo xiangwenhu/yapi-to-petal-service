@@ -23,6 +23,9 @@ export default class ConfigPuppet {
         // 解析remoteUrl，设置 projectId 和 server
         // 计算每个service file 和 types file的相对路径
         sites.forEach((site) => {
+            if (!Array.isArray(site.projects)) {
+                return;
+            }
             for (let i = 0; i < site.projects.length; i++) {
                 const project = site.projects[i];
                 if (project.type === "api") {
@@ -41,7 +44,7 @@ export default class ConfigPuppet {
                 }
             }
 
-            site.services.forEach(service => {
+            (site.services || []).forEach(service => {
                 const typesFileName = (service.fileName || "service") + ".types.ts"
                 const sFolder = service.serviceFolder || site.serviceFolder || serviceFolder;
                 const tFolder = service.typesFolder || site.typesFolder || typesFolder;
@@ -61,21 +64,21 @@ export default class ConfigPuppet {
             case "api":
                 eItems.push(
                     ...allEApiItems.filter((api) =>
-                        service.items.includes(api.api._id)
+                        api.site.server === api.site.server && service.items.includes(api.api._id)
                     )
                 );
                 break;
             case "cate":
                 eItems.push(
                     ...allEApiItems.filter((api) =>
-                        service.items.includes(api.api.catid)
+                    api.site.server === api.site.server && service.items.includes(api.api.catid)
                     )
                 );
                 break;
             case "project":
                 eItems.push(
                     ...allEApiItems.filter((api) =>
-                        service.items.includes(api.project.id!)
+                    api.site.server === api.site.server && service.items.includes(api.project.id!)
                     )
                 );
                 break;
@@ -107,7 +110,7 @@ export default class ConfigPuppet {
             ServiceGroup
         > = {};
         sites.forEach((site) => {
-            site.services.forEach((service) => {
+            (site.services || []).forEach((service) => {
                 const typesFileName = (service.fileName || "service") + suffix;
                 const fTypesFile = path.join(
                     configDir,

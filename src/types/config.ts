@@ -24,6 +24,10 @@ export namespace IConfig {
          */
         type?: "export" | "api";
         /**
+         * 路由方式
+         */
+        router?: "hash" | "history";
+        /**
          * 名称
          */
         name?: string;

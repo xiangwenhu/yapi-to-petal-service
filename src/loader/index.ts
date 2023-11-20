@@ -2,6 +2,10 @@ import axios from "axios";
 import { IConfig } from "../types/config";
 import { EAPIItem } from "../types";
 import { CateItem, YAPI } from "../types/yapi";
+import { save } from "../saver";
+import { serverToCommonStr } from "../util";
+import { getServerHost } from "./util";
+import path from "path";
 
 const ins = axios.create();
 
@@ -40,7 +44,11 @@ const apiModeService = {
 }
 
 
-
+/**
+ * 通过 API 获取接口详情
+ * @param project 
+ * @returns 
+ */
 async function getApiModeProjectData(project: IConfig.YPIProject) {
     const cates = await apiModeService.listMenu(project);
     for (let i = 0; i < cates.length; i++) {
@@ -52,7 +60,6 @@ async function getApiModeProjectData(project: IConfig.YPIProject) {
         }
     }
     return cates;
-
 }
 
 
@@ -86,6 +93,14 @@ export async function downloadProjects(
             });
             eApiItems.push(...eItems);
         });
+
+        const fName =  serverToCommonStr(getServerHost(site.server));
+        const cacheFilename =  path.join(cacheProjectsPath, `${fName}.json`)
+        save(cacheFilename, {
+            cates,
+            ...site
+        })
     }
     return eApiItems;
+
 }
