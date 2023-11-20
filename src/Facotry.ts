@@ -101,6 +101,7 @@ export default class Factory {
             headersContent.push(
                 `
 function pathToUrl(path: string, pathParams: Object | undefined) {
+    path = path.replace(/\\/\{/img, "/:").replace(/\}/, "");
     const toPath = compile(path, { encode: encodeURIComponent });
     const rPath = toPath(pathParams);
     return rPath;

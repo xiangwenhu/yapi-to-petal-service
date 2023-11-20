@@ -40,7 +40,7 @@ export function urlToName(strArr: string[]) {
 }
 
 function getMethodNameFromUrl(url: string) {
-    return url.split("/").filter(u => u.trim().length > 0 && !u.startsWith(":")).reverse()[0];
+    return url.split("/").filter(u => u.trim().length > 0 && !u.startsWith(":") && !u.startsWith("{")).reverse()[0];
 } 0
 
 

@@ -19,6 +19,11 @@ export namespace IConfig {
      */
     export interface YPIProject {
         /**
+         * export 直接导出的全部信息
+         * api 需要额外处理
+         */
+        type?: "export" | "api";
+        /**
          * 名称
          */
         name?: string;

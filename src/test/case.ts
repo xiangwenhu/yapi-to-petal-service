@@ -1,7 +1,7 @@
 import path from "path";
-import Factory from "../src/Facotry";
+import Factory from "../Facotry";
 
-const configPath = path.join(__dirname, "../demodata/config/demo.json");
+const configPath = path.join(__dirname, "../../demodata/config/demo.json");
 
 (async function () {
 

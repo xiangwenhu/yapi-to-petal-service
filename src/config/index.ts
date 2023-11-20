@@ -18,23 +18,27 @@ export default class ConfigPuppet {
     }
 
     init(oriConfig: IConfig) {
-        const config =  _.cloneDeep(oriConfig);
+        const config = _.cloneDeep(oriConfig);
         const { sites, serviceFolder, typesFolder } = config;
         // 解析remoteUrl，设置 projectId 和 server
         // 计算每个service file 和 types file的相对路径
         sites.forEach((site) => {
             for (let i = 0; i < site.projects.length; i++) {
                 const project = site.projects[i];
-                if (project.remoteUrl && project.remoteUrl.startsWith("http")) {
-                    const qs = new QueryString(project.remoteUrl);
-                    project.id = +qs.get("pid");
-                    project.token = qs.get("token");
+                if (project.type === "api") {
                     continue;
-                } else if (project.id && project.token) {
-                    project.remoteUrl = `${site.server}/api/open/plugin/export-full?type=json&pid=${project.id}&status=all&token=${project.token}`;
-                    continue;
+                } else {
+                    if (project.remoteUrl && project.remoteUrl.startsWith("http")) {
+                        const qs = new QueryString(project.remoteUrl);
+                        project.id = +qs.get("pid");
+                        project.token = qs.get("token");
+                        continue;
+                    } else if (project.id && project.token) {
+                        project.remoteUrl = `${site.server}/api/open/plugin/export-full?type=json&pid=${project.id}&status=all&token=${project.token}`;
+                        continue;
+                    }
+                    throw new Error("project 必须配置 remoteUrl, 或者 id和token");
                 }
-                throw new Error("project 必须配置 remoteUrl, 或者 id和token");
             }
 
             site.services.forEach(service => {
