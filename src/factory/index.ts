@@ -1,13 +1,16 @@
 import path from "path";
-import ConfigPuppet from "./config";
-import { EAPIItem, ServiceGroup } from "./types";
-import * as loader from "./loader";
-import * as saver from "./saver";
-import NamesFactory from "./code/NameFactory";
-import { getFullApiDocUrl } from "./code/util";
-import { genTypeScript } from "./code/ts";
-import generateApiHeader from "./code/templates/api.header";
-import { genRequest } from "./code/api";
+import ConfigPuppet from "../config";
+import { EAPIItem, ServiceGroup } from "../types";
+import * as loader from "../loader";
+import * as saver from "../saver";
+import NamesFactory from "../code/NameFactory";
+import { getFullApiDocUrl } from "../code/util";
+import { genTypeScript } from "../code/ts";
+import generateApiHeader from "../code/templates/api.header";
+import { genRequest } from "../code/api";
+import { CommonGenHandler, FactoryOptions } from "../types/factory";
+import builtInOptions from "./builtIn";
+import _ from "lodash";
 
 export default class Factory {
     private configManager: ConfigPuppet;
@@ -15,10 +18,47 @@ export default class Factory {
 
     private configDir: string;
 
-    constructor(configPath: string) {
+    private oriOptions: FactoryOptions;
+    // @ts-ignore
+    private options: FactoryOptions;
+
+    constructor(configPath: string, options: FactoryOptions = {}) {
         this.configDir = path.dirname(configPath);
         this.configManager = new ConfigPuppet(configPath);
         this.eApiItems = [];
+        this.oriOptions = options;
+
+        this.initOptions()
+    }
+
+    normalOptions(options: FactoryOptions = {}) {
+        const cOptions = _.cloneDeep(options);
+        ["content", "header", "footer", "item"].forEach(key => {
+            // @ts-ignore
+            let handlers: CommonGenHandler[] | undefined = (cOptions.types || {})[key] as CommonGenHandler[] | undefined;
+            if (cOptions.types && handlers && !Array.isArray(handlers)) {
+                // @ts-ignore
+                cOptions.types[key] = [handlers];
+            }
+
+            // @ts-ignore
+            handlers = (cOptions.apis || {})[key] as CommonGenHandler[] | undefined;;
+            if (cOptions.apis && handlers && !Array.isArray(handlers)) {
+                // @ts-ignore
+                cOptions.apis[key] = [handlers];
+            }
+        })
+        return cOptions;
+    }
+
+    private initOptions() {
+        const nOptions = this.normalOptions(this.oriOptions);
+        const bOptions = this.normalOptions(builtInOptions)
+        this.options = _.mergeWith({}, bOptions, nOptions, function (value: any, srcValue: any, key: string, object: any, source: any) {
+            if (Array.isArray(value)) {
+                return (value || []).concat(srcValue || [])
+            }
+        });
     }
 
     private async downloadProjects() {
@@ -74,15 +114,23 @@ export default class Factory {
         });
     }
 
+    buildParts(handlers: CommonGenHandler[] | undefined, sg: ServiceGroup) {
+        if (!Array.isArray(handlers)) {
+            return []
+        }
+        return handlers.map(h => {
+            const content = h.call(undefined, sg)
+            return content;
+        }).flat();
+    }
+
     private async buildServices(servicesGroup: ServiceGroup[]) {
         const { configManager, eApiItems } = this;
         // 生成文件
         for (let i = 0; i < servicesGroup.length; i++) {
             const g = servicesGroup[i];
-            let servicesContent: string[] = [];
-            let headersContent: string[] = [];
-            headersContent.push(`import axios from "axios"`);
-            headersContent.push(`import { compile } from "path-to-regexp";`);
+            let servicesContent: string[] = this.buildParts(this.options.apis?.content as any[], g);
+            let headersContent: string[] = this.buildParts(this.options.apis?.header as any[], g)
             for (let sIndex = 0; sIndex < g.services.length; sIndex++) {
                 const service = g.services[sIndex];
                 const sEItems = configManager.getServiceAPIItems(
@@ -98,16 +146,6 @@ export default class Factory {
                 headersContent.push(requestHeaderStr);
                 servicesContent.push(requestStr);
             }
-            headersContent.push("\r\n");
-            headersContent.push(
-                `
-function pathToUrl(path: string, pathParams: Object | undefined) {
-    path = path.replace(/\\/\\{/img, "/:").replace(/\\}/img, "");
-    const toPath = compile(path, { encode: encodeURIComponent });
-    const rPath = toPath(pathParams);
-    return rPath;
-}`.trim()
-            );
             const content =
                 headersContent.join("\r\n") +
                 "\r\n\r\n" +

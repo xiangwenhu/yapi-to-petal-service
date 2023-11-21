@@ -76,6 +76,14 @@ export namespace IConfig {
          * service File 相对于 types File的路径
          */
         relativePath?: string;
+        /**
+         * 是否使用自定义的request
+         */
+        useCustomRequest: boolean;
+        /**
+         * 请求方法前缀，默认是 axios<ResBody>
+         */
+        requestPrefix: string;
     }
 
     export interface SiteItem {

@@ -1,6 +1,6 @@
 import { EAPIItem } from "../../types";
 import { APINames } from "../NameFactory";
-
+import { genRequestPrefix } from "../util";
 
 function getParamsTypes(type: APINames) {
     const arr = [];
@@ -36,9 +36,9 @@ export default function generateAPI(eApi: EAPIItem) {
     const { method, path: url } = api;
     const funParamsTypes = getParamsTypes(type!);
     // const  resType = type?.hasResBody ? `Promise<${type.resBodyTypeName}>`: `Promise<void>`;
-    const resType = type?.hasResBody ? `${type.resBodyTypeName}` : `void`;
     const axiosParams = getAxiosExtraParams(type!);
     let code: string = "";
+    const requestPrefix = genRequestPrefix(eApi);
     if (!type!.hasPathParams) {
         code =
             `
@@ -46,9 +46,9 @@ export default function generateAPI(eApi: EAPIItem) {
  * ${api.title}
  **/
 export function ${type?.apiName}(${funParamsTypes}) {
-    return axios<${resType}>({
+    return ${requestPrefix}({
         url: "${url}",
-        method: "${method}",
+        method: "${method.toLowerCase()}",
 ${axiosParams}`.trim() +
             `
     })
@@ -61,9 +61,9 @@ ${axiosParams}`.trim() +
  **/
 export function ${type?.apiName}(${funParamsTypes}) {
     const url = pathToUrl("${url}",pathParams);
-    return axios<${resType}>({
+    return ${requestPrefix}({
         url,
-        method: "${method}",
+        method: "${method.toLowerCase()}",
 ${axiosParams}`.trim() +
             `
     })

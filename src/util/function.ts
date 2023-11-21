@@ -2,7 +2,9 @@ function innerCreateFunction(params: string[], code: string): Function {
     const paramsStr = params.map((c) => `'${c}'`).join(',');
 
     const funStr = `return new Function(${paramsStr}, \`${code}\`) `;
-    return new Function(funStr)();
+    const fn = new Function(funStr)();
+    console.log("fn", fn.toString());
+    return fn;
 }
 
 export function createFunction(code: string, ...args: string[]) {

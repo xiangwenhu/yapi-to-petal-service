@@ -85,6 +85,7 @@ export default class ConfigPuppet {
             default:
                 break;
         }
+        eItems.forEach(e=> e.service = service)
         return eItems;
     }
 
