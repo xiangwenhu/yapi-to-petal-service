@@ -1,14 +1,14 @@
 import path from "path";
-import NamesFactory from "../src/code/NameFactory";
-import { genRequest } from "../src/code/api";
-import generateApiHeader from "../src/code/templates/api.header";
-import { genTypeScript } from "../src/code/ts";
-import { getFullApiDocUrl } from "../src/code/util";
-import ConfigPuppet from "../src/config";
-import * as loader from "../src/loader";
-import * as saver from "../src/saver";
-import { EAPIItem } from "../src/types";
-import { ensureDir } from "../src/util";
+import NamesFactory from "../code/NameFactory";
+import { genRequest } from "../code/api";
+import generateApiHeader from "../code/templates/api.header";
+import { genTypeScript } from "../code/ts";
+import { getFullApiDocUrl } from "../code/util";
+import ConfigPuppet from "../config";
+import * as loader from "../loader";
+import * as saver from "../saver";
+import { EAPIItem } from "../types";
+import { ensureDir } from "../util";
 
 const configPath = path.join(__dirname, "../demodata/config/demo.json");
 

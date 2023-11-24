@@ -18,26 +18,33 @@ export default class ConfigPuppet {
     }
 
     init(oriConfig: IConfig) {
-        const config =  _.cloneDeep(oriConfig);
+        const config = _.cloneDeep(oriConfig);
         const { sites, serviceFolder, typesFolder } = config;
         // 解析remoteUrl，设置 projectId 和 server
         // 计算每个service file 和 types file的相对路径
         sites.forEach((site) => {
+            if (!Array.isArray(site.projects)) {
+                return;
+            }
             for (let i = 0; i < site.projects.length; i++) {
                 const project = site.projects[i];
-                if (project.remoteUrl && project.remoteUrl.startsWith("http")) {
-                    const qs = new QueryString(project.remoteUrl);
-                    project.id = +qs.get("pid");
-                    project.token = qs.get("token");
+                if (project.type === "api") {
                     continue;
-                } else if (project.id && project.token) {
-                    project.remoteUrl = `${site.server}/api/open/plugin/export-full?type=json&pid=${project.id}&status=all&token=${project.token}`;
-                    continue;
+                } else {
+                    if (project.remoteUrl && project.remoteUrl.startsWith("http")) {
+                        const qs = new QueryString(project.remoteUrl);
+                        project.id = +qs.get("pid");
+                        project.token = qs.get("token");
+                        continue;
+                    } else if (project.id && project.token) {
+                        project.remoteUrl = `${site.server}/api/open/plugin/export-full?type=json&pid=${project.id}&status=all&token=${project.token}`;
+                        continue;
+                    }
+                    throw new Error("project 必须配置 remoteUrl, 或者 id和token");
                 }
-                throw new Error("project 必须配置 remoteUrl, 或者 id和token");
             }
 
-            site.services.forEach(service => {
+            (site.services || []).forEach(service => {
                 const typesFileName = (service.fileName || "service") + ".types.ts"
                 const sFolder = service.serviceFolder || site.serviceFolder || serviceFolder;
                 const tFolder = service.typesFolder || site.typesFolder || typesFolder;
@@ -57,27 +64,28 @@ export default class ConfigPuppet {
             case "api":
                 eItems.push(
                     ...allEApiItems.filter((api) =>
-                        service.items.includes(api.api._id)
+                        api.site.server === api.site.server && service.items.includes(api.api._id)
                     )
                 );
                 break;
             case "cate":
                 eItems.push(
                     ...allEApiItems.filter((api) =>
-                        service.items.includes(api.api.catid)
+                    api.site.server === api.site.server && service.items.includes(api.api.catid)
                     )
                 );
                 break;
             case "project":
                 eItems.push(
                     ...allEApiItems.filter((api) =>
-                        service.items.includes(api.project.id!)
+                    api.site.server === api.site.server && service.items.includes(api.project.id!)
                     )
                 );
                 break;
             default:
                 break;
         }
+        eItems.forEach(e=> e.service = service)
         return eItems;
     }
 
@@ -103,7 +111,7 @@ export default class ConfigPuppet {
             ServiceGroup
         > = {};
         sites.forEach((site) => {
-            site.services.forEach((service) => {
+            (site.services || []).forEach((service) => {
                 const typesFileName = (service.fileName || "service") + suffix;
                 const fTypesFile = path.join(
                     configDir,

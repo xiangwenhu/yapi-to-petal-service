@@ -1,3 +1,36 @@
+
+export namespace YAPI {
+    export interface ResData<D = any> {
+        errcode: number;
+        errmsg: string;
+        data: D
+    }
+
+    interface PagedData<D> {
+        count: number;
+        total: number;
+        list: D[]
+    }
+
+    export type ResPagedData<D> = ResData<PagedData<D>>;
+
+    /**
+     * /api/interface/list
+     * https://hellosean1025.github.io/yapi/openapi.html
+     */
+    export type ResAPIList = ResPagedData<APIItem>;
+
+    /**
+     *   /api/interface/get
+     *  https://hellosean1025.github.io/yapi/openapi.html
+     */
+    export type ResAPIDetail = ResData<APIItem>
+
+
+    export type ResMenuList = ResData<CateItem[]>
+}
+
+
 export interface CateItem {
     /**
      * 索引

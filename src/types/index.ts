@@ -12,6 +12,8 @@ export type EAPIItem = {
         serviceFileName?: string;
         typesFileName?: string;
     },
+    service?: IConfig.ServiceItem;
+    serviceGroup?: ServiceGroup
 }
 
 export interface ServiceGroup {

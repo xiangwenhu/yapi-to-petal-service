@@ -19,6 +19,15 @@ export namespace IConfig {
      */
     export interface YPIProject {
         /**
+         * export 直接导出的全部信息
+         * api 需要额外处理
+         */
+        type?: "export" | "api";
+        /**
+         * 路由方式
+         */
+        router?: "hash" | "history";
+        /**
          * 名称
          */
         name?: string;
@@ -67,6 +76,14 @@ export namespace IConfig {
          * service File 相对于 types File的路径
          */
         relativePath?: string;
+        /**
+         * 是否使用自定义的request
+         */
+        useCustomRequest: boolean;
+        /**
+         * 请求方法前缀，默认是 axios<ResBody>
+         */
+        requestPrefix: string;
     }
 
     export interface SiteItem {
