@@ -10,7 +10,8 @@ import path from 'path';
   const sSplit = new SchemaExtractor(schema);
 
   const typeStr = await sSplit.toTypeScript("UserList", {
-    unknownAny: true
+    unknownAny: true,
+    additionalProperties: false
   });
 
   console.log("results:", typeStr);
