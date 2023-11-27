@@ -1,71 +1,22 @@
+import fs from 'fs';
 import schema from "../../demodata/schema/pc";
 
-import SchemaSplit from "../schema/SchemaSplit";
+import SchemaExtractor from "../schema/SchemaExtractor";
+import path from 'path';
 
 
 
 ; (async function () {
-    const sSplit = new SchemaSplit(schema);
+  const sSplit = new SchemaExtractor(schema);
 
-    const typeStr = await sSplit.toTypeScript("name", {});
+  const typeStr = await sSplit.toTypeScript("UserList", {
+    unknownAny: true
+  });
 
-    console.log("results:", typeStr);
+  console.log("results:", typeStr);
+
+  fs.writeFileSync(path.join(__dirname, "../../demoService/test.ts"), typeStr)
 
 })()
 
 
-
-/**
- * 职务列表
- */
-export type UserPosition = {
-    /**
-     * 职务编码
-     */
-    PositionCode?: string;
-    /**
-     * 职务名称
-     */
-    PositionName?: string;
-    /**
-     * 组织ID
-     */
-    OrgID?: number;
-    /**
-     * 组织名称
-     */
-    OrgName?: string;
-    /**
-     * 是否主职务
-     */
-    IsMain?: boolean;
-    /**
-     * 任职开始时间
-     */
-    TermBegin?: string;
-    /**
-     * 任职结束时间
-     */
-    TermEnd?: string;
-    [k: string]: unknown;
-  }[];
-  
-  /**
-   * 员工职务变更请求参数
-   * path: /api/personnel/userManager/userPositionChange
-   * doc url: https://mis.jjmatch.cn:4000/project/395/interface/api/5793
-   */
-  export interface ReqUserPositionChangeBody {
-    /**
-     * 职务级别
-     */
-    DutyLevel?: number;
-    /**
-     * 用户ID
-     */
-    UserID?: number;
-    UserPosition?: UserPosition;
-    [k: string]: unknown;
-  }
-  
-  
