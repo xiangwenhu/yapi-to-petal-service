@@ -17,7 +17,7 @@ export function replaceRequestPrefix(value: string ,paramObject: Record<string, 
 }
 
 export function genRequestPrefix(eApi: EAPIItem) {
-    const resType = eApi.type?.hasResBody ? `${eApi.type.resBodyTypeName}` : `void`;
+    const resType = eApi.type?.hasResBody ? `${eApi.type.resBodyTypeName}.${eApi.type.resBodyTypeName}` : `void`;
     const result = replaceRequestPrefix(eApi.service?.requestPrefix || 'axios<${R}>', {
         R: resType,
         method: eApi.api.method.toLocaleLowerCase(),
