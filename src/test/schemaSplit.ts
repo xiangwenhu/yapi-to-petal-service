@@ -5,7 +5,6 @@ import SchemaExtractor from "../schema/SchemaExtractor";
 import path from 'path';
 
 
-
 ; (async function () {
   const sSplit = new SchemaExtractor(schema);
 

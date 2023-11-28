@@ -1,13 +1,20 @@
-import { Schema } from "inspector";
 import { JSONSchema, Options } from "json-schema-to-typescript";
 import { jsonSchemeToTypeScript } from ".";
-import { firstToUpper } from "../util";
-import _ from "lodash";
+import SchemaNameFactory from "./SchemaNameFactory";
 
 const TYPES = ["array", "object"];
 
 export default class SchemaExtractor {
-    constructor(private schema: JSONSchema) {}
+
+    #oriSchema: JSONSchema;
+    #root: JSONSchema;
+    #nameFactory: SchemaNameFactory;
+
+    constructor(private schema: JSONSchema) {
+        this.#oriSchema = schema;
+        this.#root = schema;
+        this.#nameFactory = new SchemaNameFactory()
+    }
 
     private clone(schema: JSONSchema) {
         return JSON.parse(JSON.stringify(schema)) as JSONSchema;
@@ -15,8 +22,9 @@ export default class SchemaExtractor {
 
     private recompileObject(
         schema: JSONSchema,
-        rootSchema: JSONSchema = schema
+        parentKey: string | undefined
     ) {
+        const rootSchema = this.#root;
         if (schema.type !== "object" || !schema.properties) {
             return schema;
         }
@@ -26,40 +34,52 @@ export default class SchemaExtractor {
         );
         for (let [key, pSchema] of keyValues) {
             const typeStr = pSchema.type as string;
+            if (pSchema.default) {
+                delete pSchema.default
+            }
             if (!TYPES.includes(typeStr)) {
                 continue;
             }
             // 对象
             if (pSchema.type === "object" && pSchema.properties) {
-                const definitionName = firstToUpper(key);
+                const definitionName = this.#nameFactory.gen({
+                    parentKey,
+                    key,
+                    schema: pSchema
+                });
                 rootSchema.definitions = rootSchema.definitions || {};
                 rootSchema.definitions[definitionName] = this.recompileSchema(
-                    pSchema,
-                    rootSchema
+                    pSchema
                 );
+                delete schema.properties[key].default;
                 schema.properties[key] = {
                     $ref: `#/definitions/${definitionName}`,
                 };
             } else if (pSchema.type === "array" && pSchema.items) {
-                // 数组               
-                const newSchema = this.recompileArray(pSchema, rootSchema);
+                // 数组
+                const newSchema = this.recompileArray(pSchema, key);
+                delete schema.properties[key].default;
                 schema.properties[key] = newSchema;
             }
         }
         return schema;
     }
 
-    private recompileArray(schema: JSONSchema, rootSchema: JSONSchema) {
+    private recompileArray(schema: JSONSchema, parentKey: string | undefined) {
+        const rootSchema = this.#root;
         if (schema.type !== "array" || !schema.items) {
             return schema;
         }
 
         if (!Array.isArray(schema.items)) {
-            const definitionName = firstToUpper(`${schema.title || ""}Items`);
+            const definitionName = this.#nameFactory.gen({
+                parentKey,
+                key: "Item",
+                schema: schema.items
+            });
             rootSchema.definitions = rootSchema.definitions || {};
             rootSchema.definitions[definitionName] = this.recompileSchema(
                 schema.items,
-                rootSchema
             );
             delete schema.default;
             schema.items = {
@@ -67,7 +87,7 @@ export default class SchemaExtractor {
             };
         } else {
             const items = schema.items.map((item) =>
-                this.recompileSchema(item, rootSchema)
+                this.recompileSchema(item)
             );
             schema.items = items;
         }
@@ -76,8 +96,7 @@ export default class SchemaExtractor {
     }
 
     private recompileSchema(
-        schema: JSONSchema,
-        rootSchema: JSONSchema = schema
+        schema: JSONSchema
     ) {
         // 么有属性 + 么有 items
         if (schema.type != "array" && schema.type !== "object") {
@@ -85,13 +104,14 @@ export default class SchemaExtractor {
         }
 
         if (schema.type === "object") {
-            return this.recompileObject(schema, rootSchema);
+            return this.recompileObject(schema, undefined);
         }
-        return this.recompileArray(schema, rootSchema);
+        return this.recompileArray(schema, undefined);
     }
 
     async toTypeScript(name: string, options: Partial<Options> | undefined) {
         const schema = this.clone(this.schema);
+        this.#root = schema;
         const newSchema = this.recompileSchema(schema);
         console.log("newSchema:", newSchema);
         const types = await jsonSchemeToTypeScript(newSchema, name, options);
