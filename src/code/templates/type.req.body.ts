@@ -2,6 +2,7 @@ import { JSONSchema4 } from "json-schema";
 import { EAPIItem } from "../../types";
 import { jsonSchemeToTypeScript } from "../../schema";
 import { getTypeByFormType } from "../../util/typesTransformer";
+import SchemaExtractor from "../../schema/SchemaExtractor";
 
 function genCodeByForm({ api, type }: EAPIItem) {
     const fCodes = (api.req_body_form || []).map(
@@ -52,18 +53,16 @@ export default async function generateReqBodyType(eApi: EAPIItem) {
             if (!schema.$schema) {
                 schema.$schema = "http://json-schema.org/draft-04/schema#";
             }
-            code = await jsonSchemeToTypeScript(schema, typeName, {
-                bannerComment: "",
-            });
-            return {
-                schema,
-                code,
-                typeName,
-                apiInfo: api,
-            };
-        }else {
+            const extractor = new SchemaExtractor(schema);
 
-            const code = `
+            code = await extractor.toTypeScript(typeName, {
+                bannerComment: "",
+                additionalProperties: false
+            });
+
+        } else {
+
+            code = `
 /**
  * ${api.title}请求Body
  * path: ${api.path}
@@ -71,16 +70,21 @@ export default async function generateReqBodyType(eApi: EAPIItem) {
  **/
 export interface ${typeName} ${api.req_body_other}
             `.trim();
-            return {
-                code
-            }
+
         }
     } else if (api.req_body_type == "form") {
-        return {
-            code: genCodeByForm(eApi),
-            typeName,
-            apiInfo: api,
-        };
+        code = genCodeByForm(eApi)
+    } else {
+        code = "";
     }
-    return null;
+    const namespaceCode = `
+ export namespace ${typeName} {
+${code}
+ }`
+
+    return {
+        code: namespaceCode,
+        typeName,
+        apiInfo: api,
+    };
 }

@@ -2,6 +2,7 @@ import { JSONSchema4 } from "json-schema";
 import { EAPIItem } from "../../types";
 import { jsonSchemeToTypeScript } from "../../schema";
 import { mockToTypeScript } from "../util/mockjs";
+import SchemaExtractor from "../../schema/SchemaExtractor";
 
 /**
  * 生成响应的TS
@@ -23,15 +24,13 @@ export default async function generateResBodyType(eApi: EAPIItem) {
                 schema.description = `${api.title}响应结果\r\npath: ${api.path}\r\ndoc url: ${type?.docUrl}`;
             }
             schema.title = typeName;
-            code = await jsonSchemeToTypeScript(schema, typeName, {
+
+            const extractor = new SchemaExtractor(schema);
+
+            code = await extractor.toTypeScript(typeName, {
                 bannerComment: "",
+                additionalProperties: false
             });
-            return {
-                schema,
-                code,
-                typeName,
-                apiInfo: api,
-            };
         } else {
             // const schema: JSONSchema4 = mockjs.toJSONSchema(JSON.parse(api.res_body)) as JSONSchema4;
             // if (!schema.description) {
@@ -61,10 +60,25 @@ export interface ${typeName} ${typeStr}
                 code
             }
         }
-    }
-    return {
-        code: `
+    } else {
+        code = `
     export interface ${typeName} ${api.res_body}
-    `.trim(),
+    `.trim()
     };
+
+    const namespaceCode = `
+ export namespace ${typeName} {
+${code}
+ }
+`.trim();
+
+
+    return {
+        code: namespaceCode,
+        typeName,
+        apiInfo: api,
+    };
+
+
 }
+
