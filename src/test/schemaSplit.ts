@@ -8,14 +8,14 @@ import path from 'path';
 ; (async function () {
   const sSplit = new SchemaExtractor(schema);
 
-  const typeStr = await sSplit.toTypeScript("UserList", {
+  const { code } = await sSplit.toTypeScript("UserList", {
     unknownAny: true,
     additionalProperties: false
   });
 
-  console.log("results:", typeStr);
+  console.log("results:", code);
 
-  fs.writeFileSync(path.join(__dirname, "../../demoService/test.ts"), typeStr)
+  fs.writeFileSync(path.join(__dirname, "../../demoService/test.ts"), code)
 
 })()
 

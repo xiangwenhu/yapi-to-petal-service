@@ -114,7 +114,10 @@ export default class SchemaExtractor {
         this.#root = schema;
         const newSchema = this.recompileSchema(schema);
         console.log("newSchema:", newSchema);
-        const types = await jsonSchemeToTypeScript(newSchema, name, options);
-        return types;
+        const code = await jsonSchemeToTypeScript(newSchema, name, options);
+        return {
+            code,
+            schema: newSchema
+        };
     }
 }

@@ -11,7 +11,7 @@ function getParamsTypes(type: APINames) {
         arr.push(`query: ${type.reqQueryTypeName}`);
     }
     if (type.hasReqBody) {
-        arr.push(`data: ${type.reqBodyTypeName}.${type.reqBodyTypeName}`);
+        arr.push(`data: ${type.reqBodyTypeName}`);
     }
     return arr.join(", ");
 }

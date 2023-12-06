@@ -3,6 +3,7 @@ import { EAPIItem } from "../../types";
 import { jsonSchemeToTypeScript } from "../../schema";
 import { getTypeByFormType } from "../../util/typesTransformer";
 import SchemaExtractor from "../../schema/SchemaExtractor";
+import { generateNamespace } from "../util"
 
 function genCodeByForm({ api, type }: EAPIItem) {
     const fCodes = (api.req_body_form || []).map(
@@ -55,13 +56,18 @@ export default async function generateReqBodyType(eApi: EAPIItem) {
             }
             const extractor = new SchemaExtractor(schema);
 
-            code = await extractor.toTypeScript(typeName, {
+            const result = await extractor.toTypeScript(typeName, {
                 bannerComment: "",
                 additionalProperties: false
             });
 
-        } else {
+            code = result.code;
+            // 有额外的定义, 生成 namespace
+            if (Object.keys(result.schema.definitions || {}).length > 0) {
+                code = generateNamespace(code, typeName);
+            }
 
+        } else {
             code = `
 /**
  * ${api.title}请求Body
@@ -77,13 +83,10 @@ export interface ${typeName} ${api.req_body_other}
     } else {
         code = "";
     }
-    const namespaceCode = `
- export namespace ${typeName} {
-${code}
- }`
+
 
     return {
-        code: namespaceCode,
+        code,
         typeName,
         apiInfo: api,
     };

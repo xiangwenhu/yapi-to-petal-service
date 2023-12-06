@@ -17,7 +17,7 @@ export function replaceRequestPrefix(value: string, paramObject: Record<string, 
 }
 
 export function genRequestPrefix(eApi: EAPIItem) {
-    const resType = eApi.type?.hasResBody ? `${eApi.type.resBodyTypeName}.${eApi.type.resBodyTypeName}` : `void`;
+    const resType = eApi.type?.hasResBody ? `${eApi.type.resBodyTypeName}` : `void`;
     const result = replaceRequestPrefix(eApi.service?.requestPrefix || 'axios<${R}>', {
         R: resType,
         method: eApi.api.method.toLocaleLowerCase(),
@@ -35,4 +35,47 @@ export function fixTypesFilePath(relativePath: string) {
         return `./${fp}`
     }
     return fp;
+}
+
+
+const REGEX_TS_KV = /(\w+\?{0,1}): (\w+(\[\]){0,1});/g;
+function replaceTypeName(content: string, replacer: (typeName: string) => string) {
+
+  let match;
+  while ((match = REGEX_TS_KV.exec(content)) !== null) {
+    const modifiedType = replacer(match[2]); // 假设你有一个名为 modifyType 的函数来修改类型
+    const replacement = `${match[1]}: ${modifiedType};`;
+    content = content.replace(match[0], replacement);
+  }
+  return content
+}
+
+
+const BUILT_IN_TYPES = ['number', 'string', 'boolean', 'object', 'null'];
+
+
+const SPLIT_STR = `export interface`;
+export function generateNamespace(typesStr: string, namespaceName: string): string {
+
+    const arr = typesStr.split(SPLIT_STR);
+    if (arr.length == 2) {
+        return typesStr;
+    }
+
+    const basePart = arr.slice(0, 2).join(SPLIT_STR);
+    const rBasePart = replaceTypeName(basePart, typeName => {
+        if (BUILT_IN_TYPES.includes(typeName)) {
+            return typeName
+        }
+        return `${namespaceName}.${typeName}`
+    })
+    const namespacePart = `${SPLIT_STR}` + arr.slice(2).join(SPLIT_STR)
+
+    return `
+${rBasePart}
+
+export namespace ${namespaceName}{
+${namespacePart}
+}
+  `
 }

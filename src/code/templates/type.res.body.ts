@@ -3,7 +3,7 @@ import { EAPIItem } from "../../types";
 import { jsonSchemeToTypeScript } from "../../schema";
 import { mockToTypeScript } from "../util/mockjs";
 import SchemaExtractor from "../../schema/SchemaExtractor";
-
+import { generateNamespace } from "../util"
 /**
  * 生成响应的TS
  * @param api
@@ -27,25 +27,16 @@ export default async function generateResBodyType(eApi: EAPIItem) {
 
             const extractor = new SchemaExtractor(schema);
 
-            code = await extractor.toTypeScript(typeName, {
+            const result = await extractor.toTypeScript(typeName, {
                 bannerComment: "",
                 additionalProperties: false
             });
+            code = result.code;
+            // 有额外的定义, 生成 namespace
+            if (Object.keys(result.schema.definitions || {}).length > 0) {
+                code = generateNamespace(code, typeName);
+            }
         } else {
-            // const schema: JSONSchema4 = mockjs.toJSONSchema(JSON.parse(api.res_body)) as JSONSchema4;
-            // if (!schema.description) {
-            //     schema.description = `${api.title}响应结果\r\npath: ${api.path}\r\ndoc url: ${type?.docUrl}`;
-            // }
-            // schema.title = typeName;
-            // code = await jsonSchemeToTypeScript(schema, typeName, {
-            //     bannerComment: "",
-            // });
-            // return {
-            //     schema,
-            //     code,
-            //     typeName,
-            //     apiInfo: api,
-            // };
 
             const typeStr = await mockToTypeScript(JSON.parse(api.res_body));
             const code = `
@@ -66,15 +57,9 @@ export interface ${typeName} ${typeStr}
     `.trim()
     };
 
-    const namespaceCode = `
- export namespace ${typeName} {
-${code}
- }
-`.trim();
-
 
     return {
-        code: namespaceCode,
+        code,
         typeName,
         apiInfo: api,
     };
