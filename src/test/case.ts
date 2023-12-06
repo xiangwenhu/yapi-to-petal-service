@@ -9,7 +9,8 @@ const configPath = path.join(__dirname, "../../demodata/config/demo.json");
     const options: FactoryOptions = {
         apis: {
             header(sg){
-                return `import { apiService } from '@/services/BaseService';`
+                // return `import { apiService } from '@/services/BaseService';`
+                return ""
             }
         }
     }
