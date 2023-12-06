@@ -8,7 +8,7 @@ import path from 'path';
 ; (async function () {
   const sSplit = new SchemaExtractor(schema);
 
-  const { code } = await sSplit.toTypeScript("UserList", {
+  const { code } = await sSplit.toTypeScript("ResPerformanceDetailBody", {
     unknownAny: true,
     additionalProperties: false
   });
