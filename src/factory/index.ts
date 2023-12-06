@@ -11,6 +11,7 @@ import { genRequest } from "../code/api";
 import { CommonGenHandler, FactoryOptions } from "../types/factory";
 import builtInOptions from "./builtIn";
 import _ from "lodash";
+import { format } from "../util/prettier";
 
 export default class Factory {
     private configManager: ConfigPuppet;
@@ -108,8 +109,9 @@ export default class Factory {
                 };
             });
 
-            const tsStr = await genTypeScript(eItems);
+            let tsStr = await genTypeScript(eItems);
             console.log("tsStr:", tsStr);
+            tsStr = await format(tsStr);
             saver.save(g.filePath, tsStr);
         });
     }
@@ -146,11 +148,12 @@ export default class Factory {
                 headersContent.push(requestHeaderStr);
                 servicesContent.push(requestStr);
             }
-            const content =
+            let content =
                 headersContent.join("\r\n") +
                 "\r\n\r\n" +
                 servicesContent.join("\r\n");
 
+            content = await format(content);
             saver.save(g.filePath, content);
         }
     }

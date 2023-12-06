@@ -1,7 +1,7 @@
 ## TODO
-- [ ] 用户自定义请求
-- [ ] 每个 service namespace?
 - [ ] 支持 加载本地json文件？？？？
+- [x] 用户自定义请求
+- [x] 每个 service namespace?
 - [ ] 模板函数？ 模板文件？
 - [ ] 下载和cache
 - [ ] 异常后继续？
